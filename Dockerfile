@@ -1,5 +1,5 @@
 # Start with the official n8n image
-FROM docker.n8n.io/n8nio/n8n:1-debian-bullseye
+FROM docker.n8n.io/n8nio/n8n:1.20.4-debian
 
 USER root
 
