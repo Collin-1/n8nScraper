@@ -1,5 +1,5 @@
 # Start with the official n8n image
-FROM docker.n8n.io/n8nio/n8n:1-debian-bookworm
+FROM docker.n8n.io/n8nio/n8n:1-debian-bullseye
 
 USER root
 
