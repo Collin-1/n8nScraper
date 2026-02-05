@@ -1,18 +1,20 @@
 import sys
 import asyncio
+import json
 import random
 from playwright.async_api import async_playwright
-from playwright_stealth.stealth import stealth_async
+
+# use manual flags in the browser launch options instead.
 
 async def scrape(url):
     async with async_playwright() as p:
-        # Launch options that help avoid detection
+        # Launch Chrome with Manual Stealth Flags
         browser = await p.chromium.launch(
             headless=True,
             args=[
-                "--disable-blink-features=AutomationControlled", # Hides "navigator.webdriver" flag
+                "--disable-blink-features=AutomationControlled", # <--- Anti-Bot flag
                 "--no-sandbox", 
-                "--disable-dev-shm-usage"
+                "--disable-setuid-sandbox"
             ]
         )
         
@@ -23,28 +25,27 @@ async def scrape(url):
         
         page = await context.new_page()
         
-        # APPLY STEALTH: This injects JS to fake plugins, languages, and permissions
-        await stealth_async(page)
-        
         try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            # Go to the URL (timeout after 60 seconds)
+            await page.goto(url, timeout=60000)
             
-            # Human-like delay (randomized between 2-5 seconds)
-            await page.wait_for_timeout(random.randint(2000, 5000))
+            # Random "Human" pause
+            await page.wait_for_timeout(random.randint(1000, 3000))
             
-            # Extract content
+            # Get the content
             content = await page.content()
             
-            # Print content to stdout so n8n can capture it
-            print(content) 
+            # Print success JSON
+            print(json.dumps({"status": "success", "html": content}))
             
         except Exception as e:
-            # Handle errors gracefully so n8n doesn't crash hard
-            print(f"Error: {e}", file=sys.stderr)
+            # Print error JSON
+            print(json.dumps({"status": "error", "message": str(e)}))
         finally:
             await browser.close()
 
 if __name__ == "__main__":
-    # Get the URL from the command line argument passed by n8n
-    target_url = sys.argv[1] 
-    asyncio.run(scrape(target_url))
+    if len(sys.argv) > 1:
+        asyncio.run(scrape(sys.argv[1]))
+    else:
+        print(json.dumps({"status": "error", "message": "No URL provided"}))
