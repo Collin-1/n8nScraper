@@ -1,6 +1,6 @@
 FROM node:20-bullseye
 
-# Install system deps
+# 1. Install System Deps (Run as Root)
 RUN apt-get update && \
     apt-get install -y \
         python3 \
@@ -17,20 +17,29 @@ RUN apt-get update && \
         libxshmfence1 && \
     rm -rf /var/lib/apt/lists/*
 
-# Install n8n
+# 2. Install n8n
 RUN npm install -g n8n
 
-# Install Playwright
+# 3. Install Python Libraries
 RUN pip3 install --no-cache-dir playwright playwright-stealth
-RUN playwright install chromium && playwright install-deps chromium
 
-# Create n8n user
+# 4. Install Playwright OS Dependencies (Must be Root)
+RUN playwright install-deps chromium
+
+# 5. Create n8n user
 RUN useradd -m n8n
+
+# Switch to user 'n8n' BEFORE downloading the browser
+
 USER n8n
 
-# Copy scraper
+# 6. Install Browser Binary (As 'n8n', so it goes to /home/n8n/.cache)
+RUN playwright install chromium
+
+# 7. Setup Scripts
 WORKDIR /home/n8n/scripts
-COPY scraper.py .
+# Ensure we copy the file with the correct ownership
+COPY --chown=n8n:n8n scraper.py .
 
 EXPOSE 5678
 
