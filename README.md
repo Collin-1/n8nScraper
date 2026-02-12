@@ -65,3 +65,4 @@ docker run -p 5678:5678 n8n-scraper
 
 ## License
 MIT
+Created by Collin Makwala
